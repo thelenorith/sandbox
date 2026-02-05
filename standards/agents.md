@@ -203,6 +203,16 @@ Local `.claude/skills/` takes precedence over synced content.
 
 These skills are provided by the standards repository:
 
+### Planning Skills (use before coding)
+
+| Skill | Purpose | Built-in Agent |
+|-------|---------|----------------|
+| `/plan` | Implementation planning with task breakdown | Plan |
+| `/design` | Architecture design with tradeoff analysis | Plan |
+| `/explore` | Deep codebase exploration | Explore |
+
+### Reactive Skills (use during/after coding)
+
 | Skill | Purpose | Manual Only |
 |-------|---------|-------------|
 | `/review-code` | Code review with checklist | No |
@@ -211,6 +221,14 @@ These skills are provided by the standards repository:
 | `/security-scan` | Security vulnerability check | No |
 
 ## Standard Agents
+
+### Planning Agents
+
+| Agent | Purpose | Tools | Permission Mode |
+|-------|---------|-------|-----------------|
+| `architect` | Proactive design review for structural changes | Read, Grep, Glob | plan |
+
+### Reactive Agents
 
 | Agent | Purpose | Tools |
 |-------|---------|-------|

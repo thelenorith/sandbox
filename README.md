@@ -35,6 +35,17 @@ Browse at [standards/](standards/index.md).
 
 ## Included Agents
 
+### Planning (use before coding)
+
+| Type | Name | Purpose |
+|------|------|---------|
+| Skill | `/plan` | Implementation planning with task breakdown |
+| Skill | `/design` | Architecture design with tradeoff analysis |
+| Skill | `/explore` | Deep codebase exploration |
+| Agent | `architect` | Proactive design review for structural changes |
+
+### Reactive (use during/after coding)
+
 | Type | Name | Purpose |
 |------|------|---------|
 | Skill | `/review-code` | Code review checklist |
