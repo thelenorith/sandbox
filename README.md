@@ -13,6 +13,12 @@ Reference in your project:
 This project follows the [Work Standards](https://github.com/thelenorith/sandbox/tree/main/standards).
 ```
 
+Sync Claude Code agents:
+
+```bash
+make sync-agents STANDARDS_REPO=https://github.com/thelenorith/sandbox
+```
+
 ## Standards
 
 Browse at [standards/](standards/index.md).
@@ -25,6 +31,19 @@ Browse at [standards/](standards/index.md).
 | CLI | [CLI](standards/cli.md), [Logging & Progress](standards/logging-progress.md) |
 | Services | [Services](standards/services.md), [API Design](standards/api-design.md) |
 | UI | [User Interface](standards/user-interface.md) |
+| Agents | [Agents](standards/agents.md) |
+
+## Included Agents
+
+| Type | Name | Purpose |
+|------|------|---------|
+| Skill | `/review-code` | Code review checklist |
+| Skill | `/write-tests` | Generate tests |
+| Skill | `/check-standards` | Verify project compliance |
+| Skill | `/security-scan` | Security vulnerability scan |
+| Agent | `code-reviewer` | Proactive code review |
+| Agent | `test-writer` | Proactive test generation |
+| Agent | `documentation` | Documentation generation |
 
 ## License
 

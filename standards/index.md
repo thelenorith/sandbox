@@ -30,6 +30,12 @@ A comprehensive, generic set of standards for software development projects. The
 | [User Interface](user-interface.md) | Frontend and UI/UX standards |
 | [API Design](api-design.md) | REST, GraphQL, and API conventions |
 
+### Automation
+
+| Standard | Description |
+|----------|-------------|
+| [Agents](agents.md) | Claude Code skills and subagents |
+
 ## Guiding Principles
 
 1. **Consistency** - All projects follow the same patterns
