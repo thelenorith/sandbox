@@ -38,6 +38,15 @@ All projects should include these standard targets:
 | `build` | Build distributable package |
 | `help` | Show available targets |
 
+### Documentation Targets
+
+Documentation-heavy projects should also include:
+
+| Target | Purpose |
+|--------|---------|
+| `markdown-lint` | Lint markdown files for formatting |
+| `links` | Validate markdown links |
+
 ## Template (Python)
 
 ```makefile
@@ -127,6 +136,43 @@ help:  ## Show this help message
 
 .DEFAULT_GOAL := all
 ```
+
+## Template (Documentation)
+
+For documentation-only projects or to add to existing templates:
+
+```makefile
+PYTHON ?= python3
+
+.PHONY: all check install-dev markdown-lint links help
+
+all: check  ## Run all checks (default)
+
+check: links markdown-lint  ## Run all validation
+
+install-dev:  ## Install development dependencies
+	$(PYTHON) -m pip install --quiet pymarkdown-lnt linkcheckmd
+
+markdown-lint: install-dev  ## Lint markdown files
+	$(PYTHON) -m pymarkdown --disable-rules MD013,MD024,MD031,MD036 scan .
+
+links: install-dev  ## Validate markdown links
+	$(PYTHON) -m linkcheck --no-status --no-warnings *.md **/*.md
+
+help:  ## Show this help message
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
+
+.DEFAULT_GOAL := all
+```
+
+### Disabled Markdown Rules
+
+| Rule | Reason |
+|------|--------|
+| MD013 | Line length - impractical for prose and tables |
+| MD024 | Duplicate headings - valid in different sections |
+| MD031 | Fenced code blocks - conflicts with some valid patterns |
+| MD036 | Emphasis as heading - intentional stylistic choice |
 
 ## Conventions
 

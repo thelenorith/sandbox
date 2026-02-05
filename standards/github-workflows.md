@@ -21,6 +21,15 @@ All projects should have these CI workflows:
 | Format Check | push, PR | Ensure consistent formatting |
 | Coverage | push, PR | Verify test coverage meets threshold |
 
+### Documentation Workflows
+
+Documentation-heavy projects should also include:
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| Markdown Lint | push, PR | Validate markdown formatting |
+| Link Check | push, PR | Verify all links are valid |
+
 ## Workflow Templates
 
 ### Test Workflow (Python)
@@ -189,6 +198,60 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MINIMUM_GREEN: 80
           MINIMUM_ORANGE: 60
+```
+
+### Markdown Lint Workflow
+
+```yaml
+# .github/workflows/markdown-lint.yml
+name: Markdown Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  markdownlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Lint markdown files
+        run: make markdown-lint
+```
+
+### Link Check Workflow
+
+```yaml
+# .github/workflows/links.yml
+name: Validate Links
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate links
+        run: make links
 ```
 
 ### Combined Workflow (Alternative)
