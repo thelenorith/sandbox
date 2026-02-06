@@ -21,7 +21,7 @@ make sync-agents STANDARDS_REPO=https://github.com/thelenorith/sandbox
 
 ## Standards
 
-Browse at [standards/](standards/index.md).
+See [standards/index.md](standards/index.md) for complete catalog with guiding principles.
 
 | Area | Standards |
 |------|-----------|

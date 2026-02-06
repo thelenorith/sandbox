@@ -152,14 +152,9 @@ Use progress indicators for **long-running operations** that process multiple it
 
 ### Controlling Progress Display
 
-Progress should be controllable via CLI:
+Progress should be controllable via CLI flags. The `--quiet` / `-q` flag suppresses progress indicators along with INFO-level logging and summary statistics.
 
-| Flag | Effect on Progress |
-|------|-------------------|
-| `--quiet` / `-q` | Suppress progress indicators |
-| Default (no flag) | Show progress indicators |
-
-Note: The `--quiet` flag also suppresses INFO-level logging and summary statistics. See [CLI Standards](cli.md#--quiet-flag-behavior) for full specification.
+See [CLI Standards - --quiet Flag Behavior](cli.md#--quiet-flag-behavior) for full specification of quiet mode behavior.
 
 ### What NOT to Use for Progress
 

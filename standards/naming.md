@@ -83,11 +83,12 @@ Consistent naming conventions across all projects.
 
 ### Option Naming
 
-| Type | Example | Rule |
-|------|---------|------|
-| Single concept | `--dryrun`, `--debug` | No hyphens |
-| Qualified/compound | `--no-overwrite`, `--output-dir` | Hyphen separates qualifier |
-| Negation | `--no-cache`, `--no-verify` | Prefix with `no-` |
+For CLI tool option naming conventions, see [CLI Standards - Option Naming](../standards/cli.md#option-naming).
+
+Quick reference:
+- Single concept: `--dryrun`, `--debug`
+- Qualified: `--output-dir`, `--config-file`
+- Negation: `--no-cache`, `--no-verify`
 
 ## File Naming
 

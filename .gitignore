@@ -1,0 +1,11 @@
+# Working directory (agent output, drafts, temporary files)
+.work/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Environment
+.env
+.env.local

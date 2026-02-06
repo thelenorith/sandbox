@@ -44,7 +44,7 @@ A comprehensive, generic set of standards for software development projects. The
 4. **Discoverability** - Standard locations for everything
 5. **Industry Alignment** - Build on established standards rather than reinventing
 
-## Industry Standards Referenced
+## Industry References
 
 These standards build upon and reference established industry practices:
 

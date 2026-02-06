@@ -11,6 +11,8 @@ model: inherit
 
 Review code changes for quality, security, and adherence to best practices.
 
+**Note**: The `code-reviewer` agent also performs proactive reviews automatically after code changes. This skill is for manual on-demand reviews.
+
 ### Arguments
 
 - `$ARGUMENTS` - Optional: specific files or commit range to review

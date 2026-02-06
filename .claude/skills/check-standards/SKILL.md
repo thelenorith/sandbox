@@ -18,7 +18,7 @@ Verify the project follows the work standards.
 
 ### Standards Reference
 
-https://github.com/thelenorith/sandbox/tree/main/standards
+Check local `standards/` directory (synced from https://github.com/thelenorith/sandbox)
 
 ### Checklist
 

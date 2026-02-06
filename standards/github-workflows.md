@@ -23,7 +23,7 @@ All projects should have these CI workflows:
 
 ### Documentation Workflows
 
-Documentation-heavy projects should also include:
+For documentation-heavy projects (like this standards repository) or projects with extensive markdown documentation, also include:
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
