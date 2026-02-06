@@ -26,8 +26,12 @@ project-name/
 │   ├── test_main.py
 │   └── fixtures/          # Test data
 │       └── README.md      # Document fixture purposes
+├── .claude/                # Claude Code agents and skills
+│   ├── skills/
+│   └── agents/
 ├── .github/
 │   └── workflows/         # CI/CD workflows
+├── .work/                  # Working directory (gitignored)
 ├── .gitignore
 ├── LICENSE
 ├── Makefile
@@ -91,8 +95,12 @@ project-name/
 │   ├── setup.ts           # Test configuration
 │   └── *.test.ts
 ├── dist/                   # Build output (gitignored)
+├── .claude/                # Claude Code agents and skills
+│   ├── skills/
+│   └── agents/
 ├── .github/
 │   └── workflows/
+├── .work/                  # Working directory (gitignored)
 ├── .gitignore
 ├── .eslintrc.json
 ├── .prettierrc
@@ -183,6 +191,9 @@ htmlcov/
 # Environment
 .env
 .env.local
+
+# Working directory (agent output, drafts, temporary files)
+.work/
 ```
 
 ### JavaScript/TypeScript
@@ -208,7 +219,22 @@ coverage/
 # Environment
 .env
 .env.local
+
+# Working directory (agent output, drafts, temporary files)
+.work/
 ```
+
+### Working Directory
+
+The `.work/` directory is for temporary files that should not be committed:
+
+| Subdirectory | Purpose |
+|--------------|---------|
+| `.work/reviews/` | Code review and architecture review output |
+| `.work/drafts/` | Work-in-progress documentation |
+| `.work/scratch/` | Temporary exploration files |
+
+This directory is always gitignored and can be safely deleted.
 
 ## Configuration File Placement
 
