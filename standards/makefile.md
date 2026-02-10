@@ -47,11 +47,23 @@ Documentation-heavy projects should also include:
 | `markdown-lint` | Lint markdown files for formatting |
 | `links` | Validate markdown links |
 
+## Templates
+
+Use templates from [templates/](templates/) instead of copying inline code:
+
+| Template | Purpose |
+|----------|---------|
+| [Makefile](templates/Makefile) | Python project Makefile |
+
 ## Template (Python)
+
+See [templates/Makefile](templates/Makefile) for a ready-to-use template. Replace `<package_name>` with your package name.
+
+Key structure:
 
 ```makefile
 PYTHON ?= python3
-PACKAGE = my_package
+PACKAGE = <package_name>
 
 .PHONY: all install install-dev clean format lint typecheck test coverage build help
 

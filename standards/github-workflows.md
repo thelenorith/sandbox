@@ -32,226 +32,91 @@ For documentation-heavy projects (like this standards repository) or projects wi
 
 ## Workflow Templates
 
-### Test Workflow (Python)
+Use templates from [templates/workflows/](templates/workflows/) instead of copying inline code. This follows DRY principles and ensures templates stay current.
 
-```yaml
-# .github/workflows/test.yml
-name: Test
+### Available Templates
 
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+| Template | Purpose | Copy To |
+|----------|---------|---------|
+| [test.yml](templates/workflows/test.yml) | Run tests across Python versions | `.github/workflows/test.yml` |
+| [lint.yml](templates/workflows/lint.yml) | Run linter | `.github/workflows/lint.yml` |
+| [typecheck.yml](templates/workflows/typecheck.yml) | Run type checker | `.github/workflows/typecheck.yml` |
+| [format.yml](templates/workflows/format.yml) | Check code formatting | `.github/workflows/format.yml` |
+| [coverage.yml](templates/workflows/coverage.yml) | Coverage with PR comments | `.github/workflows/coverage.yml` |
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13']
-      fail-fast: false
+### Using Templates
 
-    steps:
-      - uses: actions/checkout@v4
+Copy templates to your project:
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: make install-dev
-
-      - name: Run tests
-        run: make test
+```bash
+mkdir -p .github/workflows
+cp standards/templates/workflows/*.yml .github/workflows/
 ```
 
-### Lint Workflow
+Or download from this repository:
 
-```yaml
-# .github/workflows/lint.yml
-name: Lint
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: make install-dev
-
-      - name: Run linter
-        run: make lint
+```bash
+mkdir -p .github/workflows
+for workflow in test lint typecheck format coverage; do
+  curl -sL https://raw.githubusercontent.com/thelenorith/sandbox/main/standards/templates/workflows/${workflow}.yml \
+    -o .github/workflows/${workflow}.yml
+done
 ```
 
-### Typecheck Workflow
+### Template Highlights
 
+**test.yml** - Matrix testing across Python 3.10, 3.11, 3.12
+
+**coverage.yml** - Includes:
+- 80% coverage threshold enforcement
+- Automatic PR comment when coverage fails
+- Clear pass/fail status
+
+**format.yml** - Includes:
+- Runs formatter and checks for changes
+- Reports which files need formatting
+- Provides actionable instructions
+
+### Documentation Workflows
+
+For documentation-heavy projects, add markdown linting and link checking. These are simpler and shown inline:
+
+**Markdown Lint** (`.github/workflows/markdown-lint.yml`):
 ```yaml
-# .github/workflows/typecheck.yml
-name: Typecheck
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  typecheck:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: make install-dev
-
-      - name: Run type checker
-        run: make typecheck
-```
-
-### Format Check Workflow
-
-```yaml
-# .github/workflows/format.yml
-name: Format Check
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  format:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: make install-dev
-
-      - name: Check formatting
-        run: make format-check
-```
-
-### Coverage Workflow
-
-```yaml
-# .github/workflows/coverage.yml
-name: Coverage
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  coverage:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: make install-dev
-
-      - name: Run coverage
-        run: make coverage
-
-      - name: Comment coverage on PR
-        if: github.event_name == 'pull_request'
-        uses: py-cov-action/python-coverage-comment-action@v3
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MINIMUM_GREEN: 80
-          MINIMUM_ORANGE: 60
-```
-
-### Markdown Lint Workflow
-
-```yaml
-# .github/workflows/markdown-lint.yml
 name: Markdown Lint
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-
 jobs:
   markdownlint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Lint markdown files
-        run: make markdown-lint
+      - run: make markdown-lint
 ```
 
-### Link Check Workflow
-
+**Link Check** (`.github/workflows/links.yml`):
 ```yaml
-# .github/workflows/links.yml
 name: Validate Links
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-
 jobs:
   links:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Validate links
-        run: make links
+      - run: make links
 ```
 
 ### Combined Workflow (Alternative)

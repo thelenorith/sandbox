@@ -2,12 +2,23 @@
 
 Unit testing conventions for consistent, reliable test suites.
 
+## Philosophy
+
+**Tests must have teeth.** Tests should catch real bugs and provide meaningful validation, not just execute code paths. A test that runs without assertions, accepts any result, or verifies only that code doesn't crash provides false confidence.
+
+> 80% meaningful coverage beats 100% superficial coverage.
+
+## Project Test Plan
+
+Each project should have a `TEST_PLAN.md` documenting testing strategy and rationale. Use the [TEST_PLAN.md template](templates/TEST_PLAN.md).
+
 ## General Principles
 
 1. **Tests are documentation** - Tests demonstrate how code should be used
 2. **Isolation** - Tests should not depend on each other or external state
 3. **Speed** - Tests should run quickly to enable frequent execution
 4. **Determinism** - Same inputs produce same results every time
+5. **Meaningful assertions** - Every test must verify expected behavior
 
 ## Test Organization
 
@@ -311,6 +322,63 @@ module.exports = {
 };
 ```
 
+## TDD for Bug Fixes
+
+All bug fixes **must** follow test-driven development:
+
+### Protocol
+
+1. **Write failing test first** - Create a test that exposes the bug
+2. **Verify test fails** - Confirm the test fails before implementing the fix
+3. **Implement the fix** - Make the minimal change to fix the bug
+4. **Verify test passes** - Confirm the fix resolves the issue
+5. **Verify revert fails** - Reverting the fix should cause the test to fail
+6. **Commit together** - Test and fix in same commit with issue reference
+
+### Why This Matters
+
+- Proves the bug existed (test fails without fix)
+- Proves the fix works (test passes with fix)
+- Prevents regressions (test remains in suite)
+- Documents the bug (test serves as specification)
+
+### Example
+
+```python
+# Step 1: Write failing test
+def test_parse_empty_string_returns_empty_list_issue_42():
+    """
+    Regression test for issue #42.
+    parse() should return empty list for empty string, not raise.
+    """
+    result = parse("")
+    assert result == []  # Previously raised ValueError
+
+# Step 2: Verify it fails (before fix)
+# $ pytest test_parser.py::test_parse_empty_string_returns_empty_list_issue_42
+# FAILED - ValueError raised
+
+# Step 3: Implement fix in parser.py
+
+# Step 4: Verify it passes (after fix)
+# $ pytest test_parser.py::test_parse_empty_string_returns_empty_list_issue_42
+# PASSED
+
+# Step 5: Revert fix, verify test fails again
+
+# Step 6: Commit both
+# git commit -m "fix: handle empty string in parse() - Fixes #42"
+```
+
+### Regression Test Naming
+
+Include the issue number in the test name:
+
+| Pattern | Example |
+|---------|---------|
+| `test_<function>_<scenario>_issue_<number>` | `test_parse_empty_string_issue_42` |
+| `test_<description>_gh<number>` | `test_null_handling_gh123` |
+
 ## Anti-Patterns
 
 | Anti-Pattern | Problem | Correct Approach |
@@ -322,6 +390,9 @@ module.exports = {
 | No assertion messages | Hard to debug | Add context to assertions |
 | Ignoring flaky tests | Hidden reliability issues | Fix or quarantine flaky tests |
 | Copy-paste test code | Maintenance burden | Use fixtures and helpers |
+| Tests without assertions | False confidence | Every test must assert |
+| Accepting any result | Useless tests | Assert specific expected values |
+| Bug fix without test | Regressions likely | TDD protocol required |
 
 ## Running Tests
 
