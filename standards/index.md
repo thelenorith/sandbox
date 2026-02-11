@@ -19,6 +19,7 @@ A comprehensive, generic set of standards for software development projects. The
 |----------|-------------|
 | [Makefile](makefile.md) | Build targets and conventions |
 | [GitHub Workflows](github-workflows.md) | CI/CD pipeline configuration |
+| [Releases](releases.md) | Versioning, changelogs, and release process |
 
 ### Interface Standards
 
@@ -51,6 +52,7 @@ These standards build upon and reference established industry practices:
 | Standard | Reference |
 |----------|-----------|
 | Semantic Versioning | [SemVer 2.0.0](https://semver.org/) |
+| Keep a Changelog | [keepachangelog.com](https://keepachangelog.com/) |
 | Conventional Commits | [conventionalcommits.org](https://www.conventionalcommits.org/) |
 | 12-Factor App | [12factor.net](https://12factor.net/) |
 | Python Style | [PEP 8](https://peps.python.org/pep-0008/), [PEP 257](https://peps.python.org/pep-0257/) |

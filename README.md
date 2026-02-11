@@ -26,7 +26,7 @@ See [standards/index.md](standards/index.md) for complete catalog with guiding p
 | Area | Standards |
 |------|-----------|
 | Code | [Naming](standards/naming.md), [Project Structure](standards/project-structure.md), [Testing](standards/testing.md) |
-| Build | [Makefile](standards/makefile.md), [GitHub Workflows](standards/github-workflows.md) |
+| Build | [Makefile](standards/makefile.md), [GitHub Workflows](standards/github-workflows.md), [Releases](standards/releases.md) |
 | Docs | [README Format](standards/readme-format.md) |
 | CLI | [CLI](standards/cli.md), [Logging & Progress](standards/logging-progress.md) |
 | Services | [Services](standards/services.md), [API Design](standards/api-design.md) |
