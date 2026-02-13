@@ -9,6 +9,7 @@ A comprehensive, generic set of standards for software development projects. The
 | Standard | Description |
 |----------|-------------|
 | [Naming](naming.md) | Project, package, and code naming conventions |
+| [Code Style](code-style.md) | Code style, formatting, and language conventions |
 | [Project Structure](project-structure.md) | Directory layout and required files |
 | [README Format](readme-format.md) | README structure and content |
 | [Testing](testing.md) | Unit testing conventions |

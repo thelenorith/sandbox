@@ -4,7 +4,7 @@
 PYTHON ?= python3
 PACKAGE = <package_name>
 
-.PHONY: all install install-dev uninstall clean format lint typecheck test test-verbose coverage help
+.PHONY: all install install-dev install-no-deps uninstall clean format lint typecheck test test-verbose coverage help
 
 all: format lint typecheck test coverage  ## Run all checks (default)
 
@@ -13,6 +13,9 @@ install:  ## Install package
 
 install-dev:  ## Install package with development dependencies
 	$(PYTHON) -m pip install -e ".[dev]"
+
+install-no-deps:  ## Install package without dependencies (for monorepo development)
+	$(PYTHON) -m pip install -e . --no-deps
 
 uninstall:  ## Uninstall package
 	$(PYTHON) -m pip uninstall -y $(PACKAGE)

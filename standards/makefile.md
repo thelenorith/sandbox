@@ -29,6 +29,7 @@ All projects should include these standard targets:
 | `all` | Run all validation (default) |
 | `install` | Install production dependencies |
 | `install-dev` | Install development dependencies |
+| `install-no-deps` | Install without dependencies (monorepo) |
 | `clean` | Remove build artifacts |
 | `format` | Format code |
 | `lint` | Run linter |
@@ -55,6 +56,50 @@ Use templates from [templates/](templates/) instead of copying inline code:
 |----------|---------|
 | [Makefile](templates/Makefile) | Python project Makefile |
 
+## Monorepo Development
+
+When developing across multiple packages in a monorepo, use `install-no-deps` to preserve local editable installs.
+
+### The Problem
+
+In a monorepo with interdependent packages (e.g., `package-a` depends on `package-b`):
+
+```
+monorepo/
+├── package-a/     # depends on package-b
+└── package-b/     # shared library
+```
+
+Running `make install-dev` in `package-a` will fetch `package-b` from PyPI, overwriting any local edits you made to `package-b`.
+
+### The Solution
+
+Use `install-no-deps` to install without fetching dependencies:
+
+```bash
+# 1. Install the dependency first (with all its deps)
+cd package-b
+make install-dev
+
+# 2. Install dependent package WITHOUT fetching deps
+cd ../package-a
+make install-no-deps
+
+# 3. Run tests - uses your local package-b
+make test
+```
+
+The `install-no-deps` target uses `pip install -e . --no-deps` to skip dependency installation, preserving your local editable installs.
+
+### When to Use
+
+| Scenario | Target |
+|----------|--------|
+| Normal development | `install-dev` |
+| Working on multiple packages | `install-no-deps` |
+| CI/CD pipelines | `install-dev` |
+| Testing cross-package changes | `install-no-deps` |
+
 ## Template (Python)
 
 See [templates/Makefile](templates/Makefile) for a ready-to-use template. Replace `<package_name>` with your package name.
@@ -65,7 +110,7 @@ Key structure:
 PYTHON ?= python3
 PACKAGE = <package_name>
 
-.PHONY: all install install-dev clean format lint typecheck test coverage build help
+.PHONY: all install install-dev install-no-deps clean format lint typecheck test coverage build help
 
 all: format lint typecheck test  ## Run all checks (default)
 
@@ -74,6 +119,9 @@ install:  ## Install production dependencies
 
 install-dev:  ## Install development dependencies
 	$(PYTHON) -m pip install -e ".[dev]"
+
+install-no-deps:  ## Install without dependencies (monorepo)
+	$(PYTHON) -m pip install -e . --no-deps
 
 clean:  ## Remove build artifacts
 	rm -rf build/ dist/ *.egg-info/ .pytest_cache/ .mypy_cache/ .coverage htmlcov/ || true
