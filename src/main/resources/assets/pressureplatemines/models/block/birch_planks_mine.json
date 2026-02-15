@@ -1,0 +1,8 @@
+{
+    "parent": "minecraft:block/cube_bottom_top",
+    "textures": {
+        "top": "minecraft:block/birch_planks",
+        "bottom": "minecraft:block/birch_planks",
+        "side": "pressureplatemines:block/birch_planks_mine_side"
+    }
+}

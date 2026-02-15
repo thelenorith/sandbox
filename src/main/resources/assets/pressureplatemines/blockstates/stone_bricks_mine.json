@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "powered=false": { "model": "pressureplatemines:block/stone_bricks_mine" },
+    "powered=true": { "model": "pressureplatemines:block/stone_bricks_mine" }
+  }
+}

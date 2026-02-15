@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "powered=false": { "model": "pressureplatemines:block/end_stone_mine" },
+    "powered=true": { "model": "pressureplatemines:block/end_stone_mine" }
+  }
+}

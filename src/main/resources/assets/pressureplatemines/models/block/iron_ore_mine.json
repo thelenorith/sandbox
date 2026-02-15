@@ -1,0 +1,8 @@
+{
+    "parent": "minecraft:block/cube_bottom_top",
+    "textures": {
+        "top": "minecraft:block/iron_ore",
+        "bottom": "minecraft:block/iron_ore",
+        "side": "pressureplatemines:block/iron_ore_mine_side"
+    }
+}

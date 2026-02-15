@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "powered=false": { "model": "pressureplatemines:block/polished_granite_mine" },
+    "powered=true": { "model": "pressureplatemines:block/polished_granite_mine" }
+  }
+}

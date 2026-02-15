@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "powered=false": { "model": "pressureplatemines:block/netherrack_mine" },
+    "powered=true": { "model": "pressureplatemines:block/netherrack_mine" }
+  }
+}

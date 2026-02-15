@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "powered=false": { "model": "pressureplatemines:block/grass_block_mine" },
+    "powered=true": { "model": "pressureplatemines:block/grass_block_mine" }
+  }
+}

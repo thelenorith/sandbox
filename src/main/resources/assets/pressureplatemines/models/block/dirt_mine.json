@@ -1,0 +1,8 @@
+{
+    "parent": "minecraft:block/cube_bottom_top",
+    "textures": {
+        "top": "minecraft:block/dirt",
+        "bottom": "minecraft:block/dirt",
+        "side": "pressureplatemines:block/dirt_mine_side"
+    }
+}

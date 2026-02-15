@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "powered=false": { "model": "pressureplatemines:block/nether_bricks_mine" },
+    "powered=true": { "model": "pressureplatemines:block/nether_bricks_mine" }
+  }
+}

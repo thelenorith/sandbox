@@ -1,0 +1,8 @@
+{
+    "parent": "minecraft:block/cube_bottom_top",
+    "textures": {
+        "top": "minecraft:block/dark_oak_planks",
+        "bottom": "minecraft:block/dark_oak_planks",
+        "side": "pressureplatemines:block/dark_oak_planks_mine_side"
+    }
+}

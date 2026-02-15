@@ -1,0 +1,67 @@
+plugins {
+    id 'java'
+    id 'net.neoforged.moddev' version '2.0.42-beta'
+}
+
+version = '1.0.0'
+group = 'com.pressureplatemines'
+
+base {
+    archivesName = 'pressureplatemines'
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    version = '21.4.0-beta'
+
+    runs {
+        client {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'pressureplatemines'
+        }
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'pressureplatemines'
+        }
+        data {
+            data()
+            programArguments.addAll '--mod', 'pressureplatemines', '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+    }
+
+    mods {
+        pressureplatemines {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+repositories {
+    mavenLocal()
+}
+
+dependencies {
+}
+
+tasks.withType(ProcessResources).configureEach {
+    var replaceProperties = [
+            minecraft_version  : '1.21.4',
+            neo_version        : '21.4.0-beta',
+            loader_version_range: '[4,)',
+            minecraft_version_range: '[1.21.4,1.22)',
+            mod_id             : 'pressureplatemines',
+            mod_name           : 'Pressure Plate Mines',
+            mod_license        : 'MIT',
+            mod_version        : version,
+            mod_authors        : 'PressurePlateMines',
+            mod_description    : 'Craft disguised pressure plate mines that explode when stepped on!'
+    ]
+    inputs.properties replaceProperties
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand replaceProperties
+    }
+}

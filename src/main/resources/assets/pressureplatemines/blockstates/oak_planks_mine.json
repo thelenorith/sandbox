@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "powered=false": { "model": "pressureplatemines:block/oak_planks_mine" },
+    "powered=true": { "model": "pressureplatemines:block/oak_planks_mine" }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "powered=false": { "model": "pressureplatemines:block/dirt_mine" },
+    "powered=true": { "model": "pressureplatemines:block/dirt_mine" }
+  }
+}
