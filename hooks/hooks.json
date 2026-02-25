@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command // empty' | grep -qE '^git\\s+push\\s+.*--force' && jq -r '.tool_input.command' | grep -qE '\\b(main|master)\\b' && echo '{\"decision\": \"deny\", \"reason\": \"Force push to main/master is blocked. Use a feature branch.\"}' || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command // empty' | grep -qE '^git\\s+push\\s+.*--force' && echo '{\"decision\": \"ask\", \"reason\": \"Force pushing to a feature branch. Are you sure?\"}' || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command // empty' | grep -qE '^git\\s+(reset\\s+--hard|clean\\s+-f)' && echo '{\"decision\": \"ask\", \"reason\": \"This is a destructive git operation that may cause data loss. Proceed?\"}' || true"
+          }
+        ]
+      }
+    ]
+  }
+}
