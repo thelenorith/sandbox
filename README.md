@@ -8,6 +8,8 @@ A Claude Code plugin for centrally managing skills, agents, hooks, and MCP serve
 .
 ├── .claude-plugin/
 │   └── plugin.json          # Plugin manifest (name, version, metadata)
+├── .claude/
+│   └── settings.json        # Project-level permissions (for repo contributors, not plugin consumers)
 ├── skills/
 │   ├── commit/SKILL.md      # /my-tools:commit  — conventional commit workflow
 │   ├── pr/SKILL.md          # /my-tools:pr      — PR creation with structured body
@@ -127,21 +129,34 @@ Edit `.mcp.json`. Use `${ENV_VAR}` syntax for secrets.
 
 ## Gaps: what plugins cannot manage
 
-The following configurations **cannot** be set via a plugin and must be managed separately in settings files (`~/.claude/settings.json`, `.claude/settings.json`, or `.claude/settings.local.json`):
+A plugin's `settings.json` (at the plugin root) currently **only supports the `agent` key**. Other settings keys are silently ignored. The following configurations must be managed separately:
 
 | Configuration | Where it lives | Notes |
 |---|---|---|
-| **Permission rules** (allow/deny/ask) | `settings.json` → `permissions` | Cannot be bundled in a plugin. Each environment needs its own permission rules. |
+| **Permission rules** (allow/deny/ask) | `settings.json` → `permissions` | Cannot travel with a plugin through marketplace installation. |
 | **CLAUDE.md instructions** | `CLAUDE.md`, `.claude/CLAUDE.md`, `~/.claude/CLAUDE.md` | Memory/instruction files are not part of the plugin system. |
-| **Environment variables** | `settings.json` → `env` | Plugin MCP servers can reference env vars with `${VAR}`, but you can't set arbitrary env vars via a plugin. |
-| **Model preferences** | `settings.json` → `model` | Default model selection is per-environment. |
+| **Environment variables** | `settings.json` → `env` | Plugin MCP servers can reference env vars with `${VAR}`, but you can't define env vars via a plugin. |
+| **Model preferences** | `settings.json` → `model` | Default model selection is per-environment. Agents *within* the plugin can specify a model. |
 | **Sandbox configuration** | `settings.json` → `sandbox` | Network allowlists, excluded commands, etc. are environment-specific. |
-| **Plugin `settings.json`** (limited) | Plugin root `settings.json` | Currently **only supports the `agent` key** to set a default agent. Other settings keys are silently ignored. |
 | **Status line** | `settings.json` → `statusLine` | Custom status line commands are environment-specific. |
 | **Managed/enterprise settings** | `managed-settings.json` | IT-deployed policies (forced login, hook restrictions, MCP allowlists) are out of scope for plugins. |
 
+### The project-settings workaround
+
+Permissions can't live in the **plugin** `settings.json`, but they *can* live in a **project-level** `.claude/settings.json` — which is exactly what [cblecker/claude-plugins](https://github.com/cblecker/claude-plugins) does. This repo includes one at `.claude/settings.json`.
+
+**How it works**: When someone clones this repo and runs `claude` inside it, the `.claude/settings.json` file applies as project-level config. It auto-allows the plugin's skills, read-only git/gh commands, and blocks reads of sensitive files.
+
+**Limitation**: This only applies to people working *inside this repo*. It does **not** travel with the plugin when installed via a marketplace. For permissions that follow you everywhere, use `~/.claude/settings.json` (user scope).
+
+```
+Plugin settings.json (plugin root)     →  only "agent" key, ships with plugin
+Project .claude/settings.json           →  full settings, applies to repo cloners only
+User ~/.claude/settings.json            →  full settings, applies everywhere for you
+```
+
 ### Practical impact
 
-- **Permissions**: If you want `Bash(npm run test *)` auto-approved everywhere, you need to add it to `~/.claude/settings.json` on each machine. There is no plugin-level permissions config.
-- **CLAUDE.md**: Project-specific instructions (coding style, architecture notes) remain in the repo's `CLAUDE.md`. Personal instructions go in `~/.claude/CLAUDE.md`. Neither can be packaged as a plugin.
-- **Model**: If you prefer `sonnet` by default, set `"model": "sonnet"` in your user settings. Agents within the plugin *can* specify a model, but the top-level default cannot be set by a plugin.
+- **Permissions**: No plugin-level permissions config exists today. Use `~/.claude/settings.json` on each machine for personal defaults, or `.claude/settings.json` in a repo for team defaults.
+- **CLAUDE.md**: Project-specific instructions remain in the repo's `CLAUDE.md`. Personal instructions go in `~/.claude/CLAUDE.md`. Neither can be packaged as a plugin.
+- **Model**: Set `"model": "sonnet"` in user settings for a global default. Agents within the plugin can specify their own model independently.
