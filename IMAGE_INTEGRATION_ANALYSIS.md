@@ -14,32 +14,38 @@ WBPP creates a predictable output directory structure:
 output_dir/
   Calibrated/
   Registered/
-    <registered images>.xisf
-    <drizzle data>.xdrz
-    <local normalization data>.xnml
+    Light_BIN-1_3840x2160_EXPOSURE-60.00s_FILTER-H_mono_READOUTM-High Conversion Gain/
+      2026-02-28_07-41-44_HFR_1.58_RMSAC_0.75_TEMP_-10.00_c_1_r.xisf
+      2026-02-28_07-41-44_HFR_1.58_RMSAC_0.75_TEMP_-10.00_c_1_r.xdrz
+      2026-02-28_07-41-44_HFR_1.58_RMSAC_0.75_TEMP_-10.00_c_1_r.xnml
+      ...
+    Light_BIN-1_3840x2160_EXPOSURE-60.00s_FILTER-O_mono_READOUTM-High Conversion Gain/
+      ...
   Master/
     masterLight-BINNING_1-FILTER_Ha-EXPTIME_300.xisf
-    masterLight-BINNING_1-FILTER_OIII-EXPTIME_300.xisf
     ...
 ```
 
-### File Naming Conventions
+### Filter Identification from Directory Names
 
-WBPP uses FITS header keywords (particularly `FILTER`) to organize files. Master file naming follows the pattern:
+WBPP organizes registered images into **subdirectories per filter**. The directory name contains a `FILTER-X` segment that can be parsed to extract the filter name. Examples:
 
 ```
-masterLight-BINNING_1-FILTER_Ha-EXPTIME_300.xisf
+Light_BIN-1_3840x2160_EXPOSURE-60.00s_FILTER-H_mono
+Light_BIN-1_3840x2160_EXPOSURE-60.00s_FILTER-H_mono_READOUTM-High Conversion Gain
 ```
 
-Registered image files retain their original names with registration suffixes. The filter identity is stored in the FITS header `FILTER` keyword.
+The filter value is extracted from the `FILTER-` prefix. In these examples, the filter is `H`. Note: the directory naming does NOT follow the `KEY_VALUE` convention used elsewhere in WBPP (e.g., master files use `FILTER_Ha`). Instead it uses `FILTER-H` with a hyphen separator.
+
+**Parsing strategy**: Extract the value between `FILTER-` and the next `_` (or end of string). Cannot rely on a leading underscore before `FILTER`.
 
 ### Associated Files
 
-For each registered `.xisf` image, there may be:
-- A `.xdrz` file (drizzle data) -- created during StarAlignment if "generate drizzle data" was enabled
-- A `.xnml` file (local normalization data) -- created if LocalNormalization was run
+For each registered `.xisf` image, there are:
+- A `.xdrz` file (drizzle data) -- same base filename
+- A `.xnml` file (local normalization data) -- same base filename (present when LocalNormalization was run; in the target workflow, always present)
 
-The `.xdrz` and `.xnml` files share the same base filename as the registered image.
+All three file types (`.xisf`, `.xdrz`, `.xnml`) share the same base filename and reside in the same filter subdirectory.
 
 ---
 
@@ -170,24 +176,88 @@ A process icon stores the complete state of a process instance -- all parameters
 - Generate drizzle data flag
 - **But NOT the file list** (the `images` array)
 
+### Confirmed API Format: ImageIntegration.images
+
+The `images` array format has been confirmed via drag-to-Script-Editor (4-element sub-arrays):
+
+```javascript
+P.images = [ // enabled, path, drizzlePath, localNormalizationDataPath
+   [true, "/path/to/image_r.xisf", "/path/to/image_r.xdrz", "/path/to/image_r.xnml"],
+   [true, "/path/to/image2_r.xisf", "/path/to/image2_r.xdrz", "/path/to/image2_r.xnml"],
+   // ...
+];
+```
+
+### Confirmed API Format: DrizzleIntegration.inputData
+
+The `inputData` array format has been confirmed (3-element sub-arrays):
+
+```javascript
+P.inputData = [ // enabled, path, localNormalizationDataPath
+   [true, "/path/to/image_r.xdrz", "/path/to/image_r.xnml"],
+   [true, "/path/to/image2_r.xdrz", "/path/to/image2_r.xnml"],
+   // ...
+];
+```
+
+Note: DrizzleIntegration takes `.xdrz` file paths (not `.xisf`), plus optional `.xnml` paths.
+
 ### Loading and Using Process Icons in Scripts
 
 ```javascript
-// Load a process icon set (.xpsm file) -- requires it to already be loaded
-// or loaded via startup script
+// Requires process icon to be pre-loaded in PixInsight workspace
 let P = ProcessInstance.fromIcon("MyIntegrationTemplate");
 
-// Modify the file list
+// Override the file list with discovered files
 P.images = [
-   [true, "/path/to/registered_image1.xisf", "/path/to/drizzle1.xdrz", "/path/to/norm1.xnml"],
-   [true, "/path/to/registered_image2.xisf", "/path/to/drizzle2.xdrz", "/path/to/norm2.xnml"],
+   [true, "/path/to/image_r.xisf", "/path/to/image_r.xdrz", "/path/to/image_r.xnml"],
 ];
 
 // Execute
 P.executeGlobal();
 
-// Access result
-var window = ImageWindow.windowById(P.integrationImageId);
+// Access results
+var integrationWindow = ImageWindow.windowById(P.integrationImageId);
+var lowRejMap = ImageWindow.windowById(P.lowRejectionMapImageId);
+var highRejMap = ImageWindow.windowById(P.highRejectionMapImageId);
+
+// Read-only output properties available after execution:
+// P.integrationImageId, P.lowRejectionMapImageId, P.highRejectionMapImageId
+// P.finalNoiseEstimateRK, P.medianNoiseReductionRK, P.referenceSNRIncrementRK
+// P.averageSNRIncrementRK, P.totalRejectedLowRK, P.totalRejectedHighRK
+// P.imageData (per-image weights and rejection counts)
+```
+
+### Key ImageIntegration Properties (from confirmed template)
+
+Notable properties that the process icon template controls:
+
+```javascript
+P.combination = ImageIntegration.prototype.Average;
+P.weightMode = ImageIntegration.prototype.PSFSignalWeight;
+P.normalization = ImageIntegration.prototype.LocalNormalization;
+P.rejection = ImageIntegration.prototype.NoRejection;  // or WinsorizedSigmaClip, ESD, etc.
+P.rejectionNormalization = ImageIntegration.prototype.LocalRejectionNormalization;
+P.generateDrizzleData = true;   // MUST be true for drizzle workflow
+P.generateRejectionMaps = true;
+P.autoMemorySize = true;
+P.autoMemoryLimit = 0.75;
+P.bufferSizeMB = 16;
+P.stackSizeMB = 1024;
+```
+
+### Key DrizzleIntegration Properties (from confirmed template)
+
+```javascript
+P.scale = 2.00;
+P.dropShrink = 0.90;
+P.kernelFunction = DrizzleIntegration.prototype.Kernel_Square;
+P.enableRejection = true;        // uses rejection maps from .xdrz
+P.enableImageWeighting = true;
+P.enableSurfaceSplines = true;
+P.enableLocalDistortion = true;
+P.enableLocalNormalization = true;
+P.enableAdaptiveNormalization = false;
 ```
 
 ### Loading .xpsm Files
@@ -197,71 +267,53 @@ Process icon sets are saved as `.xpsm` files. They can be loaded:
 2. Via startup script in `PixInsight/etc/startup/`: `.open /path/to/icons.xpsm`
 3. The icons are then available via `ProcessInstance.fromIcon("iconName")`
 
-### The Recommended Approach: Drag-to-Script-Editor
-
-The most reliable way to discover the exact property format for any process is:
-1. Configure the process in the GUI with desired settings
-2. Drag the process triangle (new instance icon) to the Script Editor
-3. PixInsight auto-generates the exact JavaScript code with all properties
-
-This is the authoritative way to determine the exact `images` array format for your version of PixInsight, since the array structure may have additional fields beyond `[enabled, path, drizzlePath, localNormPath]`.
-
 ---
 
 ## 5. Proposed Script Architecture
 
+### Design Decisions (Confirmed)
+
+- **II + DI as atomic pairs**: Since ImageIntegration overwrites `.xdrz` rejection data, each II template is immediately followed by its paired DI template(s) before the next II run. No `.xdrz` backup needed.
+- **DrizzleIntegration is optional**: Can run II-only or II+DI.
+- **Filter discovery from directory names**: Parse `FILTER-X` from WBPP subdirectory names (no FITS header reading needed).
+- **Local normalization always present** in the target workflow (but script handles absent `.xnml` gracefully).
+- **Process icons pre-loaded**: User loads `.xpsm` into PixInsight workspace before running script, passes icon names as parameters.
+- **Output directory**: `integration/` as a peer to `master/`, with filenames like `integration_H_WSC.xisf`.
+- **Rejection maps saved**: Yes, alongside integration outputs.
+- **Reference image**: Automatic selection (same algorithm, same dataset = consistent reference across runs).
+- **No FastIntegration support**.
+- **Comparison reporting**: When multiple II templates are run, generate a comparison report with SNR metrics and image quality data from the read-only output properties.
+
 ### Input
 - Path to the "registered" directory
 - One or more ImageIntegration process icon names (from a loaded .xpsm)
-- One or more DrizzleIntegration process icon names (from a loaded .xpsm)
+- Zero or more DrizzleIntegration process icon names (optional, from a loaded .xpsm)
 
 ### Processing Steps
 
 ```
-1. Scan registered directory for .xisf files
-2. Read FILTER keyword from FITS headers to group by filter
-3. For each filter group:
-   a. Find associated .xdrz files (same base name)
-   b. Find associated .xnml files (same base name)
-   c. For each ImageIntegration template icon:
-      i.   Load process instance from icon
-      ii.  Set the images array with discovered files
-      iii. Ensure "generate drizzle data" is enabled
-      iv.  Execute ImageIntegration
-      v.   Save/rename the output master
-   d. For each DrizzleIntegration template icon:
-      i.   Load process instance from icon
-      ii.  Set the inputData array with .xdrz files
-      iii. Execute DrizzleIntegration
-      iv.  Save/rename the output
+1. Scan registered directory for filter subdirectories
+2. Parse FILTER-X from each subdirectory name
+3. For each filter subdirectory:
+   a. Discover .xisf files and their associated .xdrz/.xnml files (same base name)
+   b. For each ImageIntegration template icon:
+      i.    Load process instance from icon via ProcessInstance.fromIcon()
+      ii.   Set P.images array with discovered files
+      iii.  Verify P.generateDrizzleData == true (if DI will follow)
+      iv.   Execute P.executeGlobal()
+      v.    Capture read-only output: SNR metrics, noise estimates, rejection stats
+      vi.   Save integration result to integration/<filter>_<templateName>.xisf
+      vii.  Save rejection maps to integration/<filter>_<templateName>_rejLow.xisf etc.
+      viii. If DrizzleIntegration template(s) specified:
+            - For each DI template:
+              * Load DI process instance from icon
+              * Set P.inputData with .xdrz + .xnml paths
+              * Execute P.executeGlobal()
+              * Save drizzle result to integration/<filter>_<templateName>_drizzle.xisf
+4. If multiple II templates were run, generate comparison report:
+   - Per-template: median noise reduction, SNR increment, total rejection %
+   - Side-by-side metrics table for easy comparison
 ```
-
-### Critical Design Decisions
-
-1. **Multiple templates overwrite .xdrz files**: If running multiple ImageIntegration templates for the same filter, the second run will overwrite the rejection data from the first. Options:
-   - **Option A**: Copy .xdrz files before each integration run (safest, allows parallel comparison)
-   - **Option B**: Run ImageIntegration + DrizzleIntegration as paired atomic operations
-   - **Option C**: Only support one ImageIntegration template per run (simplest)
-
-2. **File list format**: The `images` array format should be verified by dragging a configured ImageIntegration to the Script Editor. Based on research, the format is:
-   ```javascript
-   [enabled, filePath, drizzlePath, localNormalizationPath]
-   ```
-   But there may be additional fields in newer versions.
-
-3. **DrizzleIntegration file list**: Uses `inputData` property with drizzle file paths:
-   ```javascript
-   P.inputData = [
-      [true, "/path/to/file1.xdrz"],
-      [true, "/path/to/file2.xdrz"],
-   ];
-   ```
-
-4. **FastIntegration**: PixInsight 1.8.9-2+ offers FastIntegration as a speed-optimized alternative. Consider supporting it as an option, but note:
-   - It skips cosmetic correction by default
-   - Uses a subset of frames for reference image selection
-   - There have been reports of alignment artifacts (December 2025, Cloudy Nights)
-   - For critical work, standard ImageIntegration remains more reliable
 
 ---
 
@@ -275,30 +327,66 @@ When `.xnml` files are present:
 
 ---
 
-## 7. Reading FITS Headers in PJSR
+## 7. Filter Discovery from Directory Names
 
-To group files by filter, the script needs to read the `FILTER` keyword from FITS headers:
+The script extracts filter names from WBPP subdirectory names rather than reading FITS headers (much faster, no image I/O):
 
 ```javascript
-var window = ImageWindow.open(filePath);
-var keywords = window[0].keywords;
-for (var i = 0; i < keywords.length; i++) {
-   if (keywords[i].name == "FILTER") {
-      var filterName = keywords[i].strippedValue;
-      break;
-   }
+// Parse filter from directory name like:
+//   "Light_BIN-1_3840x2160_EXPOSURE-60.00s_FILTER-H_mono_READOUTM-High Conversion Gain"
+function extractFilter(dirName) {
+   var match = dirName.match(/FILTER-([^_]+)/);
+   return match ? match[1] : null;
 }
-window[0].forceClose();
 ```
 
-Note: Opening and closing windows just to read headers is expensive. Alternative approaches:
-- Use `File` and parse XISF XML headers directly
-- Use filename patterns if filter info is in filenames
-- Read FITS headers without fully opening the image (if PJSR supports it)
+This avoids the expense of opening every `.xisf` file just to read headers.
 
 ---
 
-## 8. Sources
+## 8. AutoIntegrate.js Gap Analysis
+
+[AutoIntegrate](https://github.com/jarmoruuth/AutoIntegrate) by Jarmo Ruuth is a comprehensive PixInsight script that automates image processing from calibrated files to final image. Here's how it compares to our requirements:
+
+### What AutoIntegrate CAN Do (Overlap)
+
+- **ImageIntegration**: Runs ImageIntegration on grouped light files (LRGB, narrowband, OSC)
+- **DrizzleIntegration**: Supports drizzle as an option
+- **Local Normalization**: Supports local normalization
+- **Filter grouping**: Auto-detects filters from FITS headers
+- **Rejection algorithm selection**: Dynamically chooses rejection method based on frame count
+- **Full pipeline**: CosmeticCorrection → SubframeSelector → StarAlignment → ImageIntegration → post-processing (LinearFit, HistogramTransformation, ColorCalibration, etc.)
+
+### What AutoIntegrate CANNOT Do (Gaps)
+
+1. **No "registered directory" input**: AutoIntegrate is designed to start from calibrated (or uncalibrated) images and run the full pipeline. It does not accept pre-registered WBPP output as a starting point. It runs its own StarAlignment.
+
+2. **No user-supplied process icon templates**: AutoIntegrate auto-selects rejection algorithms and parameters internally. You cannot supply a saved ImageIntegration process icon with custom settings. The rejection algorithm choice is hard-coded logic based on frame count, not user-configurable templates.
+
+3. **No multiple rejection algorithm comparison**: AutoIntegrate runs one integration per filter with its chosen algorithm. There is no facility to run the same dataset through 3 different rejection configurations and compare results.
+
+4. **No comparison reporting**: No side-by-side SNR/noise metrics across different integration strategies.
+
+5. **No atomic II+DI pairing for multiple templates**: Since it only runs one integration, the .xdrz overwriting problem doesn't arise, but it also means no multi-template workflow.
+
+6. **Full pipeline overhead**: AutoIntegrate runs many additional steps (star alignment, cosmetic correction, subframe selection, post-processing) that we've already completed in WBPP. Running AutoIntegrate would duplicate work.
+
+7. **No WBPP directory convention awareness**: AutoIntegrate doesn't know about WBPP's `FILTER-X` subdirectory naming convention; it reads FITS headers instead.
+
+### Verdict
+
+AutoIntegrate solves a different problem: it's a full end-to-end processing script for people who want one-click processing from lights to final image. Our script solves a narrower, more specialized problem: re-running only the integration step on pre-registered WBPP output, with multiple user-defined templates, and comparison reporting.
+
+**Recommendation**: Build a focused script rather than extending AutoIntegrate. The scope overlap is limited to the ImageIntegration step itself, and AutoIntegrate's architecture (full pipeline, auto-selected parameters, single integration per filter) would require substantial refactoring to support our multi-template comparison workflow. A focused script will be simpler, more maintainable, and purpose-built for the problem.
+
+That said, AutoIntegrate's source code (specifically the `AutoIntegrateEngine.js` file) is a useful reference for:
+- How to programmatically configure and execute ImageIntegration
+- How to handle DrizzleIntegration
+- Rejection algorithm selection logic (if we ever want to offer an "auto" mode)
+
+---
+
+## 9. Sources
 
 - [PixInsight Image Integration - Chaotic Nebula](https://chaoticnebula.com/pixinsight-image-integration/)
 - [Pixel Rejection Methods - DSLR Astrophotography](https://dslr-astrophotography.com/detailed-pixel-rejection-methods/)

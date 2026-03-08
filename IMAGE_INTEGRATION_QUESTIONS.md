@@ -1,95 +1,82 @@
 # Open Questions for Image Integration Script
 
-These questions need answers before or during implementation. They are ordered by priority.
+Questions resolved from initial round are marked. Remaining open questions are at the bottom.
 
 ---
 
-## Critical -- Blocks Design
+## Resolved Questions
 
-### Q1: Multiple ImageIntegration templates and drizzle file overwriting
+### Q1: Multiple II templates and drizzle file overwriting
+**Answer: (B)** Run each ImageIntegration + DrizzleIntegration as an atomic pair. We need the master light, don't care about intermediate data. Simplest approach since .xdrz gets overwritten anyway.
 
-When running multiple ImageIntegration templates (e.g., one with Winsorized Sigma Clipping, one with ESD, one with no rejection), each run **overwrites** the `.xdrz` files with its own rejection data. This means:
-- Only the last ImageIntegration run's rejection data survives for DrizzleIntegration
-- To compare drizzle results across rejection algorithms, we'd need to copy `.xdrz` files between runs
+### Q2: Exact `images` array format
+**Answer: Confirmed.** ImageIntegration `images` is a 4-element array: `[enabled, path, drizzlePath, localNormalizationDataPath]`. DrizzleIntegration `inputData` is a 3-element array: `[enabled, drizzlePath, localNormalizationDataPath]`. Full property dumps captured in IMAGE_INTEGRATION_ANALYSIS.md section 4.
 
-**Question**: Do you want the script to:
-- **(A)** Back up `.xdrz` files before each ImageIntegration run and restore them for paired DrizzleIntegration (most flexible, more disk I/O)
-- **(B)** Run each ImageIntegration + DrizzleIntegration as an atomic pair (simpler, but forces 1:1 pairing)
-- **(C)** Only run one ImageIntegration template per execution, with DrizzleIntegration after (simplest)
-- **(D)** Something else?
-
-### Q2: Exact `images` array format for your PixInsight version
-
-The `images` array format for ImageIntegration appears to be `[enabled, filePath, drizzlePath, localNormPath]` but may have additional fields in newer versions of PixInsight.
-
-**Action needed**: In PixInsight, configure an ImageIntegration instance with a few files (including drizzle and local norm paths), then drag the process triangle to the Script Editor. Paste the generated code (specifically the `P.images = [...]` block) so we can see the exact format. Same for DrizzleIntegration's `P.inputData`.
-
-### Q3: Are the .xnml (LocalNormalization) files always present?
-
-Does your WBPP workflow always produce `.xnml` files, or is LocalNormalization optional/configurable? The script needs to know whether to:
-- Always expect and require `.xnml` files
-- Optionally use them if present
-- Handle mixed cases (some filters with, some without)
-
----
-
-## Important -- Affects Implementation
+### Q3: Are .xnml files always present?
+**Answer:** In the target workflow, always present. If absent, it's a bespoke case. Either all files have .xnml or none do -- no mixed case within a run.
 
 ### Q4: Filter identification method
-
-How should the script identify which filter each registered image belongs to? Options:
-- **(A)** Read the `FILTER` FITS keyword from each `.xisf` file header (most robust, but slower -- requires opening each file)
-- **(B)** Parse filter name from the filename (faster, but depends on naming convention)
-- **(C)** Expect subdirectories per filter within the registered directory (e.g., `registered/Ha/`, `registered/OIII/`)
-- **(D)** User provides a mapping or the directory only contains one filter
-
-What does your WBPP registered directory actually look like? Are files in a flat directory with filter info in the filename/header, or organized into subdirectories?
+**Answer: (C)** WBPP produces subdirectories with filter in the name. Parse `FILTER-X` from directory names like `Light_BIN-1_..._FILTER-H_mono_READOUTM-...`. The filter value follows the `FILTER-` prefix (hyphen, not underscore). Cannot rely on leading/trailing underscore.
 
 ### Q5: Process icon loading mechanism
-
-How do you want to specify process icons to the script?
-- **(A)** Pre-load an `.xpsm` file in PixInsight before running the script, then pass icon names as parameters
-- **(B)** Have the script load an `.xpsm` file itself (path provided as parameter)
-- **(C)** Inline all settings in the script (no process icons, just hardcoded parameter sets)
-- **(D)** Some combination
+**Answer: (A)** Pre-load .xpsm in PixInsight before running script, pass icon names as parameters. UX may evolve later.
 
 ### Q6: Output naming and organization
+**Answer:** `integration/` directory as peer to `master/`. Filenames like `integration_H_WSC.xisf`. Save rejection maps alongside.
 
-When the script produces integrated masters, how should they be named/organized?
-- Should outputs go into a subdirectory (e.g., `Integration/`)?
-- Naming pattern? e.g., `integration_Ha_WSC.xisf` (filter + rejection algo abbreviation)?
-- Should the script also save rejection maps and other diagnostic outputs?
+### Q7: DrizzleIntegration always?
+**Answer:** Optional. Can run II-only or II+DI.
 
-### Q7: DrizzleIntegration -- do you always want it?
+### Q8: FastIntegration support
+**Answer:** No.
 
-Should DrizzleIntegration always run after ImageIntegration, or should it be optional? Some users prefer the non-drizzled integration for certain use cases.
+### Q9: Reference image selection
+**Answer:** Automatic is fine. Same algorithm against same dataset produces consistent reference.
+
+### Q10: WBPP resume context
+**Answer:** Primarily (A) -- replace WBPP's integration step. But also enables (C) shotgun approach: automate running many II templates to explore which rejection strategy nets the best result, with quantifiable comparison data.
+
+### Q11: Memory constraints
+**Answer:** Handled by the process icon template (memory settings are part of the saved configuration).
 
 ---
 
-## Nice to Know -- Can Defer
+## Remaining Open Questions
 
-### Q8: FastIntegration support
+### Q12: AutoIntegrate script gap analysis
+**Status: In progress.** Researching what AutoIntegrate.js can and cannot do relative to our requirements. Need to determine if it's better to use/extend AutoIntegrate or build a focused script.
 
-PixInsight 1.8.9-2+ includes FastIntegration as a faster alternative to ImageIntegration. Do you want the script to support FastIntegration process icons as well? Note: there have been reports of artifacts with FastIntegration (star doubling, alignment issues).
+### Q13: Comparison report format and metrics
+When running multiple II templates, the script captures read-only output properties after each run. Available metrics include:
+- `medianNoiseReductionRK` -- median noise reduction
+- `referenceSNRIncrementRK` / `averageSNRIncrementRK` -- SNR improvement
+- `finalNoiseEstimateRK` -- final noise level
+- `totalRejectedLowRK` / `totalRejectedHighRK` -- rejection counts
+- `imageData` -- per-image weights and rejection counts
 
-### Q9: Reference image selection
+**Question:** What format do you want the comparison report in? Options:
+- **(A)** Plain text table written to a `.txt` file
+- **(B)** Console output only (visible in PixInsight's Process Console)
+- **(C)** Both
+- **(D)** Something else (CSV, HTML)?
 
-ImageIntegration selects a reference image automatically (typically the one with highest weight). Do you want the script to allow specifying a reference image, or always let the process icon template handle this?
+Are there additional metrics beyond the above that you'd want captured?
 
-### Q10: WBPP resume context
+### Q14: Template naming convention
+The script needs to derive an output filename suffix from each process icon template (e.g., `H_WSC.xisf` where `WSC` = Winsorized Sigma Clipping). Options:
+- **(A)** Use the process icon name directly (user names their icons descriptively: "WSC", "ESD_relaxed", "NoRejection")
+- **(B)** Auto-detect the rejection algorithm from the template properties and generate an abbreviation
+- **(C)** User provides a mapping of icon names to output suffixes
 
-You mentioned resuming WBPP from the last ImageIntegration in the process container saved in the logs directory. Is the script we're building meant to:
-- **(A)** Completely replace WBPP's integration step (run independently on registered output)
-- **(B)** Serve as an alternative/recovery path when WBPP crashes during integration
-- **(C)** Both -- flexible enough for either use case
+### Q15: Error handling for missing file associations
+If a `.xisf` file exists but its corresponding `.xdrz` or `.xnml` is missing:
+- **(A)** Skip that file with a warning
+- **(B)** Fail the entire filter group
+- **(C)** Include the file without drizzle/LN data (pass empty strings)
 
-### Q11: Memory constraints
-
-Since the VM is memory-constrained (causing WBPP crashes), should the script include any memory management strategies?
-- Process one filter at a time (rather than loading all filters)
-- Force garbage collection between integrations
-- Any PixInsight-specific memory settings to configure?
-
-### Q12: Existing AutoIntegrate script
-
-The AutoIntegrate.js script (by Jarmo Ruuth, https://github.com/jarmoruuth/AutoIntegrate) already handles much of this workflow. Have you tried it? Would it be better to use/extend AutoIntegrate rather than building from scratch, or does it not meet your needs?
+### Q16: Scope of DrizzleIntegration template pairing
+When multiple II templates and multiple DI templates are specified, how should they be paired?
+- **(A)** Every II template paired with every DI template (cartesian product: 3 II x 2 DI = 6 runs per filter)
+- **(B)** Pair II and DI templates by position (1st II with 1st DI, 2nd II with 2nd DI)
+- **(C)** All II templates use the same single DI template
+- **(D)** User specifies explicit pairings
