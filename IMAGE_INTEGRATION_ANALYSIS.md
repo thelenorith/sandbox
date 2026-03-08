@@ -346,43 +346,62 @@ This avoids the expense of opening every `.xisf` file just to read headers.
 
 ## 8. AutoIntegrate.js Gap Analysis
 
-[AutoIntegrate](https://github.com/jarmoruuth/AutoIntegrate) by Jarmo Ruuth is a comprehensive PixInsight script that automates image processing from calibrated files to final image. Here's how it compares to our requirements:
+[AutoIntegrate](https://github.com/jarmoruuth/AutoIntegrate) (v1.84.1, Feb 2026) by Jarmo Ruuth is a comprehensive PixInsight script that automates image processing from calibrated files to final image. It has 90+ releases and 832 commits. Here's how it compares to our requirements:
 
 ### What AutoIntegrate CAN Do (Overlap)
 
 - **ImageIntegration**: Runs ImageIntegration on grouped light files (LRGB, narrowband, OSC)
-- **DrizzleIntegration**: Supports drizzle as an option
-- **Local Normalization**: Supports local normalization
-- **Filter grouping**: Auto-detects filters from FITS headers
+- **DrizzleIntegration**: Supports drizzle as an option (added v1.75)
+- **Local Normalization**: Can run its own LocalNormalization (disabled by default)
+- **Filter grouping**: Auto-detects filters from FITS headers or filename suffixes (`_L`, `_Ha`, etc.)
 - **Rejection algorithm selection**: Dynamically chooses rejection method based on frame count
-- **Full pipeline**: CosmeticCorrection → SubframeSelector → StarAlignment → ImageIntegration → post-processing (LinearFit, HistogramTransformation, ColorCalibration, etc.)
+- **Accepts pre-calibrated files**: Can start from already-calibrated images (skipping calibration steps)
+- **Process icon export**: v1.80 added saving executed processes as process icons for later manual review (but this is export, not import)
+- **Metrics Visualizer**: v1.76 added SubframeSelector metrics visualization (FWHM, Eccentricity, SNR, PSF Signal)
+- **Full pipeline**: CosmeticCorrection → SubframeSelector → StarAlignment → ImageIntegration → post-processing
 
-### What AutoIntegrate CANNOT Do (Gaps)
+### Gap Analysis Table
 
-1. **No "registered directory" input**: AutoIntegrate is designed to start from calibrated (or uncalibrated) images and run the full pipeline. It does not accept pre-registered WBPP output as a starting point. It runs its own StarAlignment.
+| Requirement | AutoIntegrate Support | Gap |
+|---|---|---|
+| Start from WBPP registered dir | Accepts pre-calibrated files via GUI, but no directory-pointing mode | Medium |
+| Apply II process icon templates | Cannot consume templates; only exports them | **High** |
+| Apply DI process icon templates | Cannot consume templates | **High** |
+| Atomic II+DI pairs | No explicit support (runs single integration per filter) | **High** |
+| Support pre-existing .xnml files | Runs its own LN; no documented import of external .xnml | Medium |
+| Auto-discover from WBPP dirs | Reads FITS headers/filenames, not WBPP directory naming | Medium |
+| Comparison reports across runs | No multi-run comparison (metrics visualizer is for input subframes only) | **High** |
+| Save rejection maps | No documented support | **High** |
+| Output as peer to WBPP master/ | Own directory structure (AutoOutput/, AutoMaster/, AutoProcessed/) | Low |
 
-2. **No user-supplied process icon templates**: AutoIntegrate auto-selects rejection algorithms and parameters internally. You cannot supply a saved ImageIntegration process icon with custom settings. The rejection algorithm choice is hard-coded logic based on frame count, not user-configurable templates.
+### Detailed Gaps
 
-3. **No multiple rejection algorithm comparison**: AutoIntegrate runs one integration per filter with its chosen algorithm. There is no facility to run the same dataset through 3 different rejection configurations and compare results.
+1. **No "registered directory" input**: Files must be added individually through the GUI or via file lists. No mode to point at a WBPP `registered/` directory tree.
 
-4. **No comparison reporting**: No side-by-side SNR/noise metrics across different integration strategies.
+2. **No user-supplied process icon templates**: AutoIntegrate's v1.80 "process icons" feature works in the **opposite direction** -- it saves processes AutoIntegrate executed as icons for review. It does not consume user-supplied templates. II/DI settings are managed internally through AutoIntegrate's own simplified GUI.
 
-5. **No atomic II+DI pairing for multiple templates**: Since it only runs one integration, the .xdrz overwriting problem doesn't arise, but it also means no multi-template workflow.
+3. **No multiple rejection algorithm comparison**: One integration per filter with auto-selected algorithm. No facility to run the same data through 3+ different rejection configurations.
 
-6. **Full pipeline overhead**: AutoIntegrate runs many additional steps (star alignment, cosmetic correction, subframe selection, post-processing) that we've already completed in WBPP. Running AutoIntegrate would duplicate work.
+4. **No comparison reporting**: The Metrics Visualizer evaluates input subframes, not output integration results across runs.
 
-7. **No WBPP directory convention awareness**: AutoIntegrate doesn't know about WBPP's `FILTER-X` subdirectory naming convention; it reads FITS headers instead.
+5. **No atomic II+DI pairing**: Single integration means the .xdrz overwriting problem doesn't arise, but also means no multi-template workflow.
+
+6. **Full pipeline overhead**: Would duplicate StarAlignment, cosmetic correction, etc. that WBPP already completed.
+
+7. **External .xnml ingestion unclear**: Can run its own LocalNormalization but no documented support for consuming WBPP-generated `.xnml` files as ImageIntegration input.
 
 ### Verdict
 
-AutoIntegrate solves a different problem: it's a full end-to-end processing script for people who want one-click processing from lights to final image. Our script solves a narrower, more specialized problem: re-running only the integration step on pre-registered WBPP output, with multiple user-defined templates, and comparison reporting.
+**Recommendation: Build a focused script rather than extending AutoIntegrate.**
 
-**Recommendation**: Build a focused script rather than extending AutoIntegrate. The scope overlap is limited to the ImageIntegration step itself, and AutoIntegrate's architecture (full pipeline, auto-selected parameters, single integration per filter) would require substantial refactoring to support our multi-template comparison workflow. A focused script will be simpler, more maintainable, and purpose-built for the problem.
+Reasons:
+- **Architectural mismatch**: AutoIntegrate is a monolithic end-to-end pipeline; our tool is a modular integration-stage component downstream of WBPP
+- **Process icon template consumption is antithetical to AutoIntegrate's design**: Its value proposition is managing II/DI settings internally; accepting arbitrary templates would undermine its abstraction
+- **Multi-run comparison is entirely novel**: Nothing in AutoIntegrate's architecture supports this
+- **Maintenance burden**: Forking a 832-commit single-file JavaScript project with active upstream development means merge conflict risk
+- **Our requirements are well-scoped**: A purpose-built script is tractable and simpler
 
-That said, AutoIntegrate's source code (specifically the `AutoIntegrateEngine.js` file) is a useful reference for:
-- How to programmatically configure and execute ImageIntegration
-- How to handle DrizzleIntegration
-- Rejection algorithm selection logic (if we ever want to offer an "auto" mode)
+AutoIntegrate's source code (specifically `AutoIntegrateEngine.js`) remains a useful reference for PixInsight scripting patterns.
 
 ---
 
@@ -402,6 +421,8 @@ That said, AutoIntegrate's source code (specifically the `AutoIntegrateEngine.js
 - [Drizzle Integration in PI 1.8.8 - Star Watcher](https://www.star-watcher.ch/image-processing/drizzle-integration-pix-insight-1-8-8/)
 - [PCL DrizzleData Class Reference](https://pixinsight.com/developer/pcl/doc/html/classpcl_1_1DrizzleData.html)
 - [AutoIntegrate Script - GitHub](https://github.com/jarmoruuth/AutoIntegrate)
+- [AutoIntegrate Documentation](https://ruuth.xyz/AutoIntegrateInfo.html)
+- [AutoIntegrate Forum - Local Normalization](https://forums.ruuth.xyz/t/outliers-rejection-local-normalization-not-run-as-default/95)
 - [PixInsight PJSR Reference](https://pixinsight.com/developer/pjsr/index.html)
 - [WBPP Guide - Utah Desert Remote](https://utahdesertremote.com/improve-your-astrophotography-with-weighted-batch-preprocessing/)
 - [Cloudy Nights - Rejection Algorithms Discussion](https://www.cloudynights.com/forums/topic/697077-question-about-rejection-algorithms-in-pixinsight/)
