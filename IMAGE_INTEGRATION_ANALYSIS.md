@@ -120,13 +120,25 @@ For rapid A/B testing of rejection settings before committing to a full integrat
 - Script can override these on the template before execution
 - ROI produces incomplete `.xdrz` rejection data, so **DI must be disabled in preview mode**
 
+**ROI selection -- interactive via PixInsight Previews**: Rather than entering coordinates manually, the script can read ROI from a PixInsight preview (a native rectangular subregion drawn on any image window):
+
+```javascript
+// User draws a preview rectangle on any open image, then runs the script
+var win = ImageWindow.activeWindow;  // or a specific window
+var previews = win.previews;         // Array of View objects (each is a preview)
+// Read preview bounds as the ROI coordinates
+// Previews are a standard PI feature -- no custom UI needed
+```
+
+Workflow: open any registered frame → draw a preview rectangle → run script → script reads preview bounds as ROI. Fallback: explicit `roiRect` coordinates for headless/scripted runs.
+
 **Frame subset**: Use a random or quality-sorted subset (e.g., 20-50 frames) instead of the full dataset. Rejection algorithm behavior is statistically representative at these counts -- all recommended algorithms work with 25+ frames. Relative comparisons between templates remain valid even if absolute metrics differ slightly from the full dataset.
 
 **Combined**: Subset + ROI is the fastest path for comparison testing. Run 30 frames through 5 rejection templates on a 500x500 crop, compare CSV output, then run the winner on the full dataset at full resolution.
 
 Script parameters for preview mode:
 - `maxFrames` (optional): Limit number of input frames per filter (0 = all). Frames selected by... TBD (random? first N? quality-sorted if weight data available?)
-- `roiRect` (optional): `[x0, y0, x1, y1]` crop rectangle for preview integration. Forces DI off.
+- `roiRect` (optional): `[x0, y0, x1, y1]` crop rectangle for preview integration. Can be read from a PixInsight preview on an open image, or specified explicitly. Forces DI off.
 - When either is set, output directory becomes `integration_preview/` to avoid overwriting real results
 
 ---
