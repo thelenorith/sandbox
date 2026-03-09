@@ -273,8 +273,8 @@ Process icon sets are saved as `.xpsm` files. They can be loaded:
 
 ### Design Decisions (Confirmed)
 
-- **II + DI as atomic pairs**: Since ImageIntegration overwrites `.xdrz` rejection data, each II template is immediately followed by its paired DI template(s) before the next II run. No `.xdrz` backup needed.
-- **DrizzleIntegration is optional**: Can run II-only or II+DI.
+- **II + DI as atomic pairs**: Since ImageIntegration overwrites `.xdrz` rejection data, each II template is immediately followed by the DI template before the next II run. No `.xdrz` backup needed.
+- **DrizzleIntegration is optional**: Can run II-only or II+DI. Only a single DI template is supported -- DI adds spatial resolution but doesn't differentiate rejection strategies, so running DI for every II comparison run is expensive with minimal diagnostic value. In practice, DI is used for the final chosen II configuration, not during comparison.
 - **Filter discovery from directory names**: Parse `FILTER-X` from WBPP subdirectory names (no FITS header reading needed).
 - **Local normalization always present** in the target workflow (but script handles absent `.xnml` gracefully).
 - **Process icons pre-loaded**: User loads `.xpsm` into PixInsight workspace before running script, passes icon names as parameters.
@@ -282,12 +282,14 @@ Process icon sets are saved as `.xpsm` files. They can be loaded:
 - **Rejection maps saved**: Yes, alongside integration outputs.
 - **Reference image**: Automatic selection (same algorithm, same dataset = consistent reference across runs).
 - **No FastIntegration support**.
-- **Comparison reporting**: When multiple II templates are run, generate a comparison report with SNR metrics and image quality data from the read-only output properties.
+- **Comparison output**: CSV format with all captured properties per run, for consumption by other tools. This script is a data-capture first pass, not the analysis tool.
+- **Template naming**: Use process icon names directly as output suffixes (user-controlled, no translation).
+- **Missing file handling**: Fail the entire filter group if expected `.xdrz`/`.xnml` associations are missing.
 
 ### Input
 - Path to the "registered" directory
 - One or more ImageIntegration process icon names (from a loaded .xpsm)
-- Zero or more DrizzleIntegration process icon names (optional, from a loaded .xpsm)
+- Zero or one DrizzleIntegration process icon name (optional, from a loaded .xpsm)
 
 ### Processing Steps
 
@@ -296,23 +298,21 @@ Process icon sets are saved as `.xpsm` files. They can be loaded:
 2. Parse FILTER-X from each subdirectory name
 3. For each filter subdirectory:
    a. Discover .xisf files and their associated .xdrz/.xnml files (same base name)
-   b. For each ImageIntegration template icon:
+   b. Validate: if DI requested or .xnml expected, fail filter group if associations missing
+   c. For each ImageIntegration template icon:
       i.    Load process instance from icon via ProcessInstance.fromIcon()
       ii.   Set P.images array with discovered files
       iii.  Verify P.generateDrizzleData == true (if DI will follow)
       iv.   Execute P.executeGlobal()
-      v.    Capture read-only output: SNR metrics, noise estimates, rejection stats
-      vi.   Save integration result to integration/<filter>_<templateName>.xisf
-      vii.  Save rejection maps to integration/<filter>_<templateName>_rejLow.xisf etc.
-      viii. If DrizzleIntegration template(s) specified:
-            - For each DI template:
+      v.    Capture read-only output: SNR metrics, noise estimates, rejection stats, per-image data
+      vi.   Save integration result to integration/<filter>_<iconName>.xisf
+      vii.  Save rejection maps to integration/<filter>_<iconName>_rejLow.xisf etc.
+      viii. If DrizzleIntegration template specified:
               * Load DI process instance from icon
               * Set P.inputData with .xdrz + .xnml paths
               * Execute P.executeGlobal()
-              * Save drizzle result to integration/<filter>_<templateName>_drizzle.xisf
-4. If multiple II templates were run, generate comparison report:
-   - Per-template: median noise reduction, SNR increment, total rejection %
-   - Side-by-side metrics table for easy comparison
+              * Save drizzle result to integration/<filter>_<iconName>_drizzle.xisf
+4. Write CSV report with all captured metrics per run (filter, template, SNR, noise, rejection counts, etc.)
 ```
 
 ---

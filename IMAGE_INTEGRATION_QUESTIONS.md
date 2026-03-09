@@ -39,44 +39,30 @@ Questions resolved from initial round are marked. Remaining open questions are a
 ### Q11: Memory constraints
 **Answer:** Handled by the process icon template (memory settings are part of the saved configuration).
 
----
-
-## Remaining Open Questions
-
 ### Q12: AutoIntegrate script gap analysis
-**Status: In progress.** Researching what AutoIntegrate.js can and cannot do relative to our requirements. Need to determine if it's better to use/extend AutoIntegrate or build a focused script.
+**Answer:** Build a focused script. AutoIntegrate has high gaps on 5 of 9 requirements (no template consumption, no multi-run comparison, no rejection maps, no atomic II+DI pairing). Its monolithic end-to-end architecture is a poor fit for a modular integration-stage tool. Full analysis in IMAGE_INTEGRATION_ANALYSIS.md section 8.
 
 ### Q13: Comparison report format and metrics
-When running multiple II templates, the script captures read-only output properties after each run. Available metrics include:
+**Answer: CSV.** Structured output so additional tools can consume it. Capture all available properties per run. This script is a first-pass data capture tool, not the analysis tool itself. Start with known metrics:
 - `medianNoiseReductionRK` -- median noise reduction
 - `referenceSNRIncrementRK` / `averageSNRIncrementRK` -- SNR improvement
 - `finalNoiseEstimateRK` -- final noise level
 - `totalRejectedLowRK` / `totalRejectedHighRK` -- rejection counts
-- `imageData` -- per-image weights and rejection counts
+- `imageData` -- per-input-image weights and rejection counts (one entry per subframe that went into the integration)
 
-**Question:** What format do you want the comparison report in? Options:
-- **(A)** Plain text table written to a `.txt` file
-- **(B)** Console output only (visible in PixInsight's Process Console)
-- **(C)** Both
-- **(D)** Something else (CSV, HTML)?
-
-Are there additional metrics beyond the above that you'd want captured?
+Additional metrics will be discovered through use. Open to suggestions with rationale.
 
 ### Q14: Template naming convention
-The script needs to derive an output filename suffix from each process icon template (e.g., `H_WSC.xisf` where `WSC` = Winsorized Sigma Clipping). Options:
-- **(A)** Use the process icon name directly (user names their icons descriptively: "WSC", "ESD_relaxed", "NoRejection")
-- **(B)** Auto-detect the rejection algorithm from the template properties and generate an abbreviation
-- **(C)** User provides a mapping of icon names to output suffixes
+**Answer: (A)** Use the process icon name directly. No translation or guessing -- 100% user-controlled. Users name their icons descriptively (e.g., "WSC", "ESD_relaxed", "NoRejection").
 
 ### Q15: Error handling for missing file associations
-If a `.xisf` file exists but its corresponding `.xdrz` or `.xnml` is missing:
-- **(A)** Skip that file with a warning
-- **(B)** Fail the entire filter group
-- **(C)** Include the file without drizzle/LN data (pass empty strings)
+**Answer: (B)** Fail the entire filter group. This is an unexpected edge case that shouldn't occur in normal WBPP output. Failing loudly prevents silent data quality issues.
 
 ### Q16: Scope of DrizzleIntegration template pairing
-When multiple II templates and multiple DI templates are specified, how should they be paired?
-- **(A)** Every II template paired with every DI template (cartesian product: 3 II x 2 DI = 6 runs per filter)
-- **(B)** Pair II and DI templates by position (1st II with 1st DI, 2nd II with 2nd DI)
-- **(C)** All II templates use the same single DI template
-- **(D)** User specifies explicit pairings
+**Answer:** Support a single DI template only. DI's primary value is spatial resolution enhancement, not rejection quality differentiation. Running DI for every II comparison run is overkill -- expensive with minimal new information for comparing rejection strategies. In practice, DI would be used only for a final chosen II configuration, not during the comparison phase.
+
+---
+
+## Remaining Open Questions
+
+None currently. All questions resolved. New questions will be added as implementation proceeds.
