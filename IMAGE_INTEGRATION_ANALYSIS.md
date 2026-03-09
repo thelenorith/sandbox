@@ -225,7 +225,7 @@ var highRejMap = ImageWindow.windowById(P.highRejectionMapImageId);
 // P.integrationImageId, P.lowRejectionMapImageId, P.highRejectionMapImageId
 // P.finalNoiseEstimateRK, P.medianNoiseReductionRK, P.referenceSNRIncrementRK
 // P.averageSNRIncrementRK, P.totalRejectedLowRK, P.totalRejectedHighRK
-// P.imageData (per-image weights and rejection counts)
+// P.imageData (per-image weights and rejection counts -- excluded from CSV; too verbose for aggregate comparison)
 ```
 
 ### Key ImageIntegration Properties (from confirmed template)
@@ -304,7 +304,7 @@ Process icon sets are saved as `.xpsm` files. They can be loaded:
       ii.   Set P.images array with discovered files
       iii.  Verify P.generateDrizzleData == true (if DI will follow)
       iv.   Execute P.executeGlobal()
-      v.    Capture read-only output: SNR metrics, noise estimates, rejection stats, per-image data
+      v.    Capture read-only output: aggregate metrics (SNR, noise estimates, rejection counts)
       vi.   Save integration result to integration/<filter>_<iconName>.xisf
       vii.  Save rejection maps to integration/<filter>_<iconName>_rejLow.xisf etc.
       viii. If DrizzleIntegration template specified:

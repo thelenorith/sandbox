@@ -48,7 +48,7 @@ Questions resolved from initial round are marked. Remaining open questions are a
 - `referenceSNRIncrementRK` / `averageSNRIncrementRK` -- SNR improvement
 - `finalNoiseEstimateRK` -- final noise level
 - `totalRejectedLowRK` / `totalRejectedHighRK` -- rejection counts
-- `imageData` -- per-input-image weights and rejection counts (one entry per subframe that went into the integration)
+Excluded: `imageData` (per-input-image weights/rejection counts). With hundreds or thousands of input frames, this produces too much data relative to its value here. Frame-level quality assessment belongs upstream (SubframeSelector, pre-WBPP culling), not at integration time.
 
 Additional metrics will be discovered through use. Open to suggestions with rationale.
 
