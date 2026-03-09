@@ -32,7 +32,7 @@ A PixInsight JavaScript script that takes WBPP's registered output and performs 
 
 3. **Optionally apply DrizzleIntegration** using saved process icon templates. Since ImageIntegration writes rejection data into `.xdrz` files (overwriting previous data), each II+DI pair runs as an atomic operation: II runs, then DI runs immediately using the freshly-written rejection data, before the next II template overwrites it.
 
-4. **Generate a comparison report** when multiple II templates are used. Capture the read-only output metrics (median noise reduction, SNR increment, total rejection percentages, per-image weights) and present them side-by-side so the user can make an informed choice about which rejection strategy produced the best result.
+4. **Generate a CSV comparison report** when multiple II templates are used. Capture aggregate output metrics (median noise reduction, SNR increment, total rejection percentages) so downstream tools can analyze which rejection strategy produced the best result.
 
 5. **Save all outputs** -- integrated masters, rejection maps, and drizzle results -- to an `integration/` directory alongside WBPP's existing `master/` directory, with clear naming that identifies the filter and template used.
 
@@ -93,7 +93,7 @@ Our Script
         ├─ H_WSC_drizzle.xisf
         ├─ H_ESD.xisf
         ├─ ...
-        └─ comparison_report.txt
+        └─ comparison_report.csv
 ```
 
 ### Key Constraint: .xdrz Overwriting
