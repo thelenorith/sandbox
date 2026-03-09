@@ -62,6 +62,14 @@ var win = ImageWindow.windowById(P.integrationImageId);
 win.saveAs("/path/to/output.xisf", false, false, false, false);
 ```
 
+## Preview Mode (Fast Comparison Testing)
+
+Script supports optional preview mode for rapid A/B testing before full integration:
+- `maxFrames`: Use a subset of frames (e.g., 30 of 500) -- statistically representative for rejection comparison
+- `roiRect`: Integrate only a crop region (~500x500 px) -- minutes instead of hours
+- Combined subset + ROI is the fastest path: test many templates quickly, run the winner on full data
+- Preview mode forces DI off (ROI produces incomplete .xdrz data) and outputs to `integration_preview/`
+
 ## What NOT to Build
 
 - No GUI (script with parameters only, for now)

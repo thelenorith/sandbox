@@ -110,6 +110,25 @@ This means:
 - **Do not rename or move files** after drizzle files are created -- file paths are embedded in the `.xdrz` data
 - DrizzleIntegration reads the **original unregistered images** (not the registered ones) using transformation data from the `.xdrz` files
 
+### Preview/Test Mode: Fast Comparison via ROI and Frame Subsets
+
+For rapid A/B testing of rejection settings before committing to a full integration run:
+
+**ROI (Region of Interest)**: ImageIntegration supports integrating only a rectangular crop. Pick a region (~500x500 px) that contains both bright nebula signal and known artifacts (satellite trails, hot pixels) to stress-test rejection behavior. Runs in minutes instead of hours.
+
+- II exposes `roiX0`, `roiY0`, `roiX1`, `roiY1` properties
+- Script can override these on the template before execution
+- ROI produces incomplete `.xdrz` rejection data, so **DI must be disabled in preview mode**
+
+**Frame subset**: Use a random or quality-sorted subset (e.g., 20-50 frames) instead of the full dataset. Rejection algorithm behavior is statistically representative at these counts -- all recommended algorithms work with 25+ frames. Relative comparisons between templates remain valid even if absolute metrics differ slightly from the full dataset.
+
+**Combined**: Subset + ROI is the fastest path for comparison testing. Run 30 frames through 5 rejection templates on a 500x500 crop, compare CSV output, then run the winner on the full dataset at full resolution.
+
+Script parameters for preview mode:
+- `maxFrames` (optional): Limit number of input frames per filter (0 = all). Frames selected by... TBD (random? first N? quality-sorted if weight data available?)
+- `roiRect` (optional): `[x0, y0, x1, y1]` crop rectangle for preview integration. Forces DI off.
+- When either is set, output directory becomes `integration_preview/` to avoid overwriting real results
+
 ---
 
 ## 3. Rejection Algorithms and Nebula Signal
@@ -290,6 +309,9 @@ Process icon sets are saved as `.xpsm` files. They can be loaded:
 - Path to the "registered" directory
 - One or more ImageIntegration process icon names (from a loaded .xpsm)
 - Zero or one DrizzleIntegration process icon name (optional, from a loaded .xpsm)
+- Preview mode options (optional):
+  - `maxFrames`: Limit input frames per filter (0 = all)
+  - `roiRect`: `[x0, y0, x1, y1]` crop rectangle (forces DI off)
 
 ### Processing Steps
 

@@ -65,4 +65,11 @@ Additional metrics will be discovered through use. Open to suggestions with rati
 
 ## Remaining Open Questions
 
-None currently. All questions resolved. New questions will be added as implementation proceeds.
+### Q17: Frame subset selection strategy for preview mode
+When `maxFrames` is set, how should frames be selected?
+- **(A)** First N files (alphabetical/filesystem order)
+- **(B)** Random sample
+- **(C)** Quality-sorted (if weight data is available from SubframeSelector, pick the best N)
+- **(D)** Evenly spaced across the sorted file list (captures temporal spread)
+
+Note: This affects whether preview results are representative of the full dataset. Random or evenly-spaced may give better statistical representation than first-N.
