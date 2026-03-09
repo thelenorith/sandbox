@@ -120,14 +120,31 @@ For rapid A/B testing of rejection settings before committing to a full integrat
 - Script can override these on the template before execution
 - ROI produces incomplete `.xdrz` rejection data, so **DI must be disabled in preview mode**
 
-**ROI selection -- interactive via PixInsight Previews**: Rather than entering coordinates manually, the script can read ROI from a PixInsight preview (a native rectangular subregion drawn on any image window):
+**ROI selection -- interactive via PixInsight Previews**: Rather than entering coordinates manually, the script can read ROI from a PixInsight preview (a native rectangular subregion drawn on any image window). Previews are volatile (not saved with the image file) rectangular subregions that users create by clicking and dragging in "New Preview" mode.
 
 ```javascript
-// User draws a preview rectangle on any open image, then runs the script
-var win = ImageWindow.activeWindow;  // or a specific window
-var previews = win.previews;         // Array of View objects (each is a preview)
-// Read preview bounds as the ROI coordinates
-// Previews are a standard PI feature -- no custom UI needed
+// Read ROI from the currently selected preview on the active window
+var win = ImageWindow.activeWindow;
+var sel = win.selectedPreview;       // View object for the selected preview tab
+if (!sel.isNull) {
+   var r = win.previewRect(sel);     // Rect with x0, y0, x1, y1 in parent image coords
+   // Use r.x0, r.y0, r.x1, r.y1 as ROI
+}
+
+// Or enumerate all previews
+var previews = win.previews;         // Array of View objects
+for (var i = 0; i < previews.length; i++) {
+   var rect = win.previewRect(previews[i]);
+   console.writeln(previews[i].id + ": " + rect.width + "x" + rect.height);
+}
+
+// Key API:
+// ImageWindow.previews              -- readonly Array<View>
+// ImageWindow.selectedPreview       -- View (read/write)
+// ImageWindow.previewRect(preview)  -- returns Rect (bounds in parent image coords)
+// ImageWindow.createPreview(x0, y0, x1, y1, id) -- create programmatically
+// View.isPreview                    -- readonly boolean
+// View.fullId                       -- e.g., "image1->Preview01"
 ```
 
 Workflow: open any registered frame → draw a preview rectangle → run script → script reads preview bounds as ROI. Fallback: explicit `roiRect` coordinates for headless/scripted runs.
